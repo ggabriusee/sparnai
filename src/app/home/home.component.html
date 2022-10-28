@@ -1,0 +1,52 @@
+<ng-container *ngIf="!loading">
+  <button 
+      (click)="ping()"
+      class="btn btn-warning mb-2">
+      Tikrinti serverį
+  </button>
+
+  <form #form="ngForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label class="btn btn-primary">
+        Įkelkite failą
+        <input 
+          ngModel #inputFile="ngModel" name="inputFile" required
+          type="file"   
+          class="form-control-file"
+          style="display: none;"
+          (change)="onFileUpload($event)">
+      </label>
+      <div class="alert alert-danger" *ngIf="inputFile.invalid && inputFile.touched">
+        <div *ngIf="inputFile.errors.required">
+          Privaloma įkelti failą.
+        </div>
+      </div>
+    </div>
+
+    <button 
+      [disabled]="!form.valid"
+      class="btn btn-primary">
+      Spėti paukščio rūšį
+    </button>
+  </form>
+
+  <h3 *ngIf="predictions.length > 0" class="mt-2">Spėjimai</h3>
+  <ng-container *ngIf="!error">
+    <li *ngFor="let pred of predictions" class="border border-primary rounded mt-2">
+      {{pred.class}}
+      <a *ngIf="pred.url" [href]="pred.url" target="_blank">wiki</a>
+    </li>
+  </ng-container>
+
+  <ng-container *ngIf="error">
+    <p class="mt-1">{{errorText}}</p>
+  </ng-container>
+
+  <img *ngIf="imageUrl" src="{{imageUrl}}" class="mt-2 mb-2" width="400" height="500">
+</ng-container>
+
+<div *ngIf="loading" class="d-flex justify-content-center">
+  <div role="status">
+    <span id="loading"></span>
+  </div>
+</div>
