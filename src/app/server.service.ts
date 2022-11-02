@@ -13,8 +13,8 @@ const httpOptions = {
 })
 export class ServerService {
 
-  private serviceUrl = 'https://birds-ai.herokuapp.com';
-  // private serviceUrl = 'https://birdsai.pythonanywhere.com';
+  // private serviceUrl = 'https://birds-ai.herokuapp.com';
+  private serviceUrl = 'https://birdsai.pythonanywhere.com';
   constructor(private http: HttpClient) {}
 
   getAllData(){
