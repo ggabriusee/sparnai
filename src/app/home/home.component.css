@@ -1,41 +1,40 @@
-.in-field {
-    display: flex;
-    align-items: flex-start;
+@media (max-width: 500px) {
+    .dropzone {
+        padding: 3rem !important;
+    }
+}
+
+.dropzone {
+    width: auto;
+    padding: 7rem;
+    text-align: center;
+    border: dashed 2px #979797;
     position: relative;
+    margin: 0 auto;
 }
 
-.btn-danger{
+.dropzone input {
+    opacity: 0;
     position: absolute;
-    bottom: 0;
-    margin-left: 100%;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+  
+.dropzone h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #17a2b8;
 }
 
-.spinner-border {
-    display: inline-block;
-    width: 2rem;
-    height: 2rem;
-    vertical-align: -0.125em;
-    border: 0.25em solid;
-    border-right: 0.25em solid transparent;
-    border-radius: 50%;
-    -webkit-animation: spinner-border .75s linear infinite;
-    animation: spinner-border .75s linear infinite;
+.dropzone * {
+    cursor: pointer;
 }
 
-.visually-hidden, .visually-hidden-focusable:not(:focus):not(:focus-within) {
-    position: absolute!important;
-    width: 1px !important;
-    height: 1px !important;
-    padding: 0 !important;
-    margin: -1px !important;
-    overflow: hidden !important;
-    clip: rect(0,0,0,0) !important;
-    white-space: nowrap !important;
-    border: 0 !important;
-}
-
-#loading{
-    position: absolute;
+#loading {
+    position: fixed;
     left: 50%;
     top: 50%;
     z-index: 1;

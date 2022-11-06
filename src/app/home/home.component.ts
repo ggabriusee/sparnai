@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ServerService } from '../server.service';
 import { Prediction } from '../models/Prediction';
 
@@ -7,26 +7,29 @@ import { Prediction } from '../models/Prediction';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
 
   predictions: Prediction[] = [];
   loading: boolean = false;
+  loadingImage: boolean = false;
   selectedFiles: FileList;
   errorText = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.'
   error: boolean;
   imageUrl: string;
   birdNames = new Map<string, string | null>();
+  serverWorks: boolean;
 
   constructor(private server: ServerService){
     this.birdNames.set('background', null);
   }
 
-  ping(){
+  ngOnInit(): void {
     this.loading = true;
-    this.server.getAllData().subscribe(response => {
+    this.server.getAllData().subscribe(() => {
       this.loading = false;
-      alert('Serveris veikia');
-    });
+      this.serverWorks = true;
+    },
+    err => this.loading = false);
   }
 
   onSubmit(){
@@ -36,16 +39,18 @@ export class HomeComponent {
     const formData = new FormData();
     const file = this.selectedFiles.item(0);
     formData.append('file', file, file.name);
-    this.loading = true;
+    this.loadingImage = true;
     this.error = false;
     this.server.sendFile(formData).subscribe(async preds => {
+      console.log('atsakymas is servako', preds);
       if (preds.error) {
         this.error = true;
-        this.loading = false;
+        this.loadingImage = false;
         return;
       }
       this.predictions = await this.procesMultipleCandidates(preds);
-      this.loading = false;
+      this.error = this.predictions.length === 0;
+      this.loadingImage = false;
     });
   }
 
@@ -71,10 +76,15 @@ export class HomeComponent {
     });
   }
 
-  onFileUpload(event) {
+  clearState(): void {
+    this.imageUrl = null;
     this.errorText = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.';
     this.error = false;
     this.predictions = [];
+  }
+
+  onFileUpload(event) {
+    this.clearState();
     this.selectedFiles = event.target.files;
     if (this.selectedFiles.length === 0)
         return;
@@ -82,7 +92,7 @@ export class HomeComponent {
     const mimeType = this.selectedFiles.item(0).type;
     if (mimeType.match(/image\/*/) == null) {
         this.error = true;
-        this.errorText = "Įkeltas ne paveikslėlio failas";
+        this.errorText = "Įkeltas ne paveikslėlio failas!";
         return;
     }
 
@@ -91,6 +101,7 @@ export class HomeComponent {
     reader.onload = (_event) => { 
         this.imageUrl = reader.result.toString(); 
     }
+    this.onSubmit();
   }
 
 }

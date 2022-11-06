@@ -4,24 +4,27 @@ import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ReactiveFormsModule } from '@angular/forms';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+// import {  } from '@angular/material';
 
 import { AppComponent } from './app.component';
 import { ServerService } from './server.service';
 import { CommonModule } from '@angular/common';
 import { HomeComponent } from './home/home.component';
+import { DragDropDirective } from './drag-drop.directive';
 
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent
+    HomeComponent,
+    DragDropDirective
   ],
   imports: [
     BrowserModule,
     FormsModule,
     NgbModule,
     HttpClientModule,
-    ReactiveFormsModule,
+    BrowserAnimationsModule,
     CommonModule,
     RouterModule.forRoot([
       {path: '', component: HomeComponent},
