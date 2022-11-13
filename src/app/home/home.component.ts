@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ServerService } from '../server.service';
 import { Prediction } from '../models/Prediction';
+import { CropperPosition, Dimensions, ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
 
 @Component({
   selector: 'app-home',
@@ -9,18 +10,26 @@ import { Prediction } from '../models/Prediction';
 })
 export class HomeComponent implements OnInit {
 
+  readonly NO_BIRDS = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.';
+
+  // @ViewChild(ImageCropperComponent) imageCropper: ImageCropperComponent;
+  // @ViewChild('uploadedImage') uploadedImage: ElementRef;
+
   predictions: Prediction[] = [];
   loading: boolean = false;
   loadingImage: boolean = false;
   selectedFiles: FileList;
-  errorText = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.'
+  errorText = this.NO_BIRDS;
   error: boolean;
   imageUrl: string;
   birdNames = new Map<string, string | null>();
   serverWorks: boolean;
+  enabledCrop: boolean;
+  croppedImage: string;
+  // cropperPos: CropperPosition;
 
   constructor(private server: ServerService){
-    this.birdNames.set('background', null);
+    this.birdNames.set('background', 'Nežinoma');
   }
 
   ngOnInit(): void {
@@ -32,17 +41,53 @@ export class HomeComponent implements OnInit {
     err => this.loading = false);
   }
 
+  enableCrop(){
+    this.error = false;
+    this.enabledCrop = !this.enabledCrop;
+    if (this.enabledCrop) {
+      this.loading = true;
+      // this.cropperPos = {
+      //   x1: 0, y1: 0, 
+      //   x2: (this.uploadedImage.nativeElement as HTMLImageElement).width - 10,  
+      //   y2: (this.uploadedImage.nativeElement as HTMLImageElement).height - 10
+      // };
+    } 
+    // else {
+    //   this.cropperPos = null;
+    // }
+  }
+
+  imageLoaded() {
+    this.loading = false;
+  }
+
+  cropperReady(dims: Dimensions) {
+    //this.imageCropper.cropper = {...this.cropperPos};
+    // this.cropperPosition = {
+    //   x1: 0, y1: 0, 
+    //   x2: (this.uploadedImage.nativeElement as HTMLImageElement).width,  
+    //   y2: (this.uploadedImage.nativeElement as HTMLImageElement).height
+    // };
+  }
+
+  imageCropped(event: ImageCroppedEvent) {
+    this.croppedImage = event.base64;
+    // this.error = false;
+  }
+
   onSubmit(){
-    if (this.error) {
+    if (this.error && !this.imageUrl) {
       return;
     }
+    
     const formData = new FormData();
-    const file = this.selectedFiles.item(0);
+    const file = this.enabledCrop && this.croppedImage 
+      ? this.dataURItoBlob(this.croppedImage) 
+      : this.selectedFiles.item(0);
     formData.append('file', file, file.name);
     this.loadingImage = true;
     this.error = false;
-    this.server.sendFile(formData).subscribe(async preds => {
-      console.log('atsakymas is servako', preds);
+    this.server.sendFile(formData, this.enabledCrop).subscribe(async preds => {
       if (preds.error) {
         this.error = true;
         this.loadingImage = false;
@@ -56,14 +101,19 @@ export class HomeComponent implements OnInit {
 
   async procesMultipleCandidates(data: Prediction[]) {
     let preds = await Promise.all(data.map(pred => this.predToPromise(pred)));
-    return preds.filter(pred => pred !== null);
+    return preds.filter(pred => pred !== null)
+      .map((pred, idx) => {
+        pred.class = idx+1 + '. ' + pred.class;
+        return pred;
+      });
   }
 
   predToPromise(pred: Prediction): Promise<Prediction | null> {
     const url = 'https://lt.wikipedia.org/wiki/' + pred.class.replace(" ", "_");
     if (this.birdNames.has(pred.class)) {
       const name = this.birdNames.get(pred.class);
-      return Promise.resolve(name === null ? null : new Prediction(name, url));
+      const prediction = new Prediction(name, pred.class === 'background' ? null : url); 
+      return Promise.resolve(name === null ? null : prediction);
     }
 
     return this.server.getWiki(pred.class).toPromise().then(response => {
@@ -77,8 +127,11 @@ export class HomeComponent implements OnInit {
   }
 
   clearState(): void {
+    // this.cropperPos = null;
+    this.enabledCrop = false;
+    this.croppedImage = null;
     this.imageUrl = null;
-    this.errorText = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.';
+    this.errorText = this.NO_BIRDS;
     this.error = false;
     this.predictions = [];
   }
@@ -99,9 +152,20 @@ export class HomeComponent implements OnInit {
     const reader = new FileReader();
     reader.readAsDataURL(this.selectedFiles.item(0)); 
     reader.onload = (_event) => { 
-        this.imageUrl = reader.result.toString(); 
+        this.imageUrl = reader.result.toString();
     }
-    this.onSubmit();
+    // this.onSubmit();
+  }
+
+  dataURItoBlob(dataURI) {
+    const byteString = window.atob(dataURI.split(",")[1]);
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const int8Array = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+      int8Array[i] = byteString.charCodeAt(i);
+    }
+    const blob = new Blob([int8Array], { type: 'image/jpeg' });    
+    return new File([blob], 'iskirptas.jpeg', { type: 'image/jpeg' });
   }
 
 }

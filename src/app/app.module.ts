@@ -5,7 +5,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-// import {  } from '@angular/material';
+import { ImageCropperModule } from 'ngx-image-cropper';
 
 import { AppComponent } from './app.component';
 import { ServerService } from './server.service';
@@ -25,6 +25,7 @@ import { DragDropDirective } from './drag-drop.directive';
     NgbModule,
     HttpClientModule,
     BrowserAnimationsModule,
+    ImageCropperModule,
     CommonModule,
     RouterModule.forRoot([
       {path: '', component: HomeComponent},

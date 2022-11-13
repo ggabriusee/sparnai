@@ -20,52 +20,47 @@
         </div>
       </div>
     </div>
-
-    <!-- <div class="form-group">
-      <label class="btn btn-primary">
-        Įkelkite failą
-        <input 
-          ngModel #inputFile="ngModel" name="inputFile" required
-          type="file"   
-          class="form-control-file"
-          style="display: none;"
-          (change)="onFileUpload($event)">
-      </label>
-      <div class="alert alert-danger" *ngIf="inputFile.invalid && inputFile.touched">
-        <div *ngIf="inputFile.errors.required">
-          Privaloma įkelti failą.
-        </div>
-      </div>
-    </div> -->
-
-    <!-- <button 
-      [disabled]="!form.valid"
-      class="btn btn-primary">
-      Spėti paukščio rūšį
-    </button> -->
   </form>
 </ng-container>
 
-<div *ngIf="imageUrl" class="card" style="width: 18rem;">
-  <img class="card-img-top" src="{{imageUrl}}" alt="Card image">
-  <div *ngIf="loadingImage || error" class="card-body">
-    <p *ngIf="loadingImage" class="card-text">Analizuojama...</p>
-    <div *ngIf="loadingImage" class="d-flex justify-content-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="sr-only">Loading...</span>
+<div *ngIf="imageUrl" class="scroll-container" [hidden]="loading">
+  <div class="card" style="width: 19rem;">
+    <image-cropper
+      *ngIf="enabledCrop"
+      class="card-img-top"
+      [imageURL]="imageUrl"
+      [maintainAspectRatio]="false"
+      format="jpeg"
+      (imageLoaded)="imageLoaded()"
+      (imageCropped)="imageCropped($event)">
+    </image-cropper>
+    <img *ngIf="!enabledCrop" #uploadedImage class="card-img-top" src="{{imageUrl}}" alt="Card image">
+    <!-- <img *ngIf="enabledCrop" class="card-img-top" src="{{croppedImage}}" alt="cropped card image"> -->
+    <div *ngIf="loadingImage || error" class="card-body">
+      <p *ngIf="loadingImage" class="card-text">Analizuojama...</p>
+      <div *ngIf="loadingImage" class="d-flex justify-content-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
       </div>
+      <p *ngIf="error" class="mb-0">{{errorText}}</p>
     </div>
-    <p *ngIf="error" class="mb-0">{{errorText}}</p>
-  </div>
-  <h4 *ngIf="predictions.length > 0" class="ml-2 mt-2">Spėjimai:</h4>
-  <ul class="list-group list-group-flush">
-    <li *ngFor="let pred of predictions" class="list-group-item">
-      {{pred.class}}
-      <a *ngIf="pred.url" [href]="pred.url" target="_blank" class="card-link">wiki</a>
-    </li>
-  </ul>
-  <div *ngIf="!loadingImage" class="p-1 d-flex justify-content-center">
-    <button class="btn btn-danger px-5" (click)="clearState()">Valyti</button>
+    <div *ngIf="predictions.length > 0 && !loadingImage && !loading">
+      <h5 class="ml-2 mt-2">Spėjimai:</h5>
+      <ul class="list-group list-group-flush">
+        <li *ngFor="let pred of predictions" class="list-group-item">
+          {{pred.class}}
+          <a *ngIf="pred.url" [href]="pred.url" target="_blank" class="card-link">wiki</a>
+        </li>
+      </ul>  
+    </div>
+    <div *ngIf="!loadingImage && !loading" class="p-1 d-flex flex-column">
+      <div class="d-flex justify-content-between my-1">
+        <button class="btn btn-primary px-5" (click)="onSubmit()">Spėti</button>
+        <button class="btn btn-secondary px-5" (click)="enableCrop()">{{enabledCrop ? 'Nekirpti' : 'Iškirpti'}}</button>  
+      </div>
+      <button class="btn btn-danger px-5" (click)="clearState()">Valyti</button>
+    </div>
   </div>
 </div>
 

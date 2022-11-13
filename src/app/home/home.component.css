@@ -33,6 +33,12 @@
     cursor: pointer;
 }
 
+.scroll-container {
+    max-height: 92vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
 #loading {
     position: fixed;
     left: 50%;

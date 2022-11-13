@@ -8,8 +8,7 @@
     width: 50%;
 } */
 
-body,
-html {
+html, body {
   height: 100%;
   margin: 0;
 }
