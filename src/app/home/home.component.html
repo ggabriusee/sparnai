@@ -23,7 +23,7 @@
   </form>
 </ng-container>
 
-<div *ngIf="imageUrl" class="scroll-container" [hidden]="loading">
+<div *ngIf="imageUrl" [ngStyle]="{'max-height': containerHeight}" class="scroll-container" [hidden]="loading">
   <div class="card" style="width: 19rem;">
     <image-cropper
       *ngIf="enabledCrop"

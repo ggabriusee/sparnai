@@ -26,6 +26,7 @@ export class HomeComponent implements OnInit {
   serverWorks: boolean;
   enabledCrop: boolean;
   croppedImage: string;
+  containerHeight: string = '';
   // cropperPos: CropperPosition;
 
   constructor(private server: ServerService){
@@ -33,6 +34,7 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.containerHeight = document.getElementById('app-container').offsetHeight + 'px';
     this.loading = true;
     this.server.getAllData().subscribe(() => {
       this.loading = false;
