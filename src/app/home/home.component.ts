@@ -2,6 +2,7 @@ import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ServerService } from '../server.service';
 import { Prediction } from '../models/Prediction';
 import { CropperPosition, Dimensions, ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
+import { ResponseWrapper } from '../models/ResponseWrapper';
 
 @Component({
   selector: 'app-home',
@@ -63,15 +64,6 @@ export class HomeComponent implements OnInit {
     this.loading = false;
   }
 
-  cropperReady(dims: Dimensions) {
-    //this.imageCropper.cropper = {...this.cropperPos};
-    // this.cropperPosition = {
-    //   x1: 0, y1: 0, 
-    //   x2: (this.uploadedImage.nativeElement as HTMLImageElement).width,  
-    //   y2: (this.uploadedImage.nativeElement as HTMLImageElement).height
-    // };
-  }
-
   imageCropped(event: ImageCroppedEvent) {
     this.croppedImage = event.base64;
     // this.error = false;
@@ -89,44 +81,57 @@ export class HomeComponent implements OnInit {
     formData.append('file', file, file.name);
     this.loadingImage = true;
     this.error = false;
-    this.server.sendFile(formData, this.enabledCrop).subscribe(async preds => {
-      if (preds.error) {
+    this.server.sendFile(formData, this.enabledCrop).subscribe((response: ResponseWrapper) => {
+      if (response.error) {
         this.error = true;
         this.loadingImage = false;
         return;
       }
-      this.predictions = await this.procesMultipleCandidates(preds);
+      this.predictions = response.predictions.map((pred, idx) => {
+        pred.displayName = idx+1 + '. ' + (pred.lt === null ? pred.lot : pred.lt);
+        return pred;
+      });
       this.error = this.predictions.length === 0;
       this.loadingImage = false;
     });
+    // this.server.sendFile(formData, this.enabledCrop).subscribe(async preds => {
+    //   if (preds.error) {
+    //     this.error = true;
+    //     this.loadingImage = false;
+    //     return;
+    //   }
+    //   this.predictions = await this.procesMultipleCandidates(preds);
+    //   this.error = this.predictions.length === 0;
+    //   this.loadingImage = false;
+    // });
   }
 
-  async procesMultipleCandidates(data: Prediction[]) {
-    let preds = await Promise.all(data.map(pred => this.predToPromise(pred)));
-    return preds.filter(pred => pred !== null)
-      .map((pred, idx) => {
-        pred.class = idx+1 + '. ' + pred.class;
-        return pred;
-      });
-  }
+  // async procesMultipleCandidates(data: Prediction[]) {
+  //   let preds = await Promise.all(data.map(pred => this.predToPromise(pred)));
+  //   return preds.filter(pred => pred !== null)
+  //     .map((pred, idx) => {
+  //       pred.class = idx+1 + '. ' + pred.class;
+  //       return pred;
+  //     });
+  // }
 
-  predToPromise(pred: Prediction): Promise<Prediction | null> {
-    const url = 'https://lt.wikipedia.org/wiki/' + pred.class.replace(" ", "_");
-    if (this.birdNames.has(pred.class)) {
-      const name = this.birdNames.get(pred.class);
-      const prediction = new Prediction(name, pred.class === 'background' ? null : url); 
-      return Promise.resolve(name === null ? null : prediction);
-    }
+  // predToPromise(pred: Prediction): Promise<Prediction | null> {
+  //   const url = 'https://lt.wikipedia.org/wiki/' + pred.class.replace(" ", "_");
+  //   if (this.birdNames.has(pred.class)) {
+  //     const name = this.birdNames.get(pred.class);
+  //     const prediction = new Prediction(name, pred.class === 'background' ? null : url); 
+  //     return Promise.resolve(name === null ? null : prediction);
+  //   }
 
-    return this.server.getWiki(pred.class).toPromise().then(response => {
-      this.birdNames.set(pred.class, response.title);
-      return new Prediction(response.title, url);
-    })
-    .catch(err => {
-      this.birdNames.set(pred.class, null);
-      return Promise.resolve(null);
-    });
-  }
+  //   return this.server.getWiki(pred.class).toPromise().then(response => {
+  //     this.birdNames.set(pred.class, response.title);
+  //     return new Prediction(response.title, url);
+  //   })
+  //   .catch(err => {
+  //     this.birdNames.set(pred.class, null);
+  //     return Promise.resolve(null);
+  //   });
+  // }
 
   clearState(): void {
     // this.cropperPos = null;

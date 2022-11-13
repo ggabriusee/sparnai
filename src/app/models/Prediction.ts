@@ -1,11 +1,12 @@
 export class Prediction {
-    class: string;
-    confidence: number;
-    url: string;
-    error: string;
+    lot: string;
+    lt: string;
+    orni_url: string;
+    wiki_url: string;
+    displayName: string;
 
-    constructor(className: string, url: string){
-        this.class = className;
-        this.url = url;
-    }
+    // constructor(className: string, url: string){
+    //     this.class = className;
+    //     this.url = url;
+    // }
 }

@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Prediction } from './models/Prediction';
+import { ResponseWrapper } from './models/ResponseWrapper';
+import { Observable } from 'rxjs';
 
 const httpOptions = {
   headers: new HttpHeaders({
@@ -21,14 +23,13 @@ export class ServerService {
     return this.http.get<string>(this.serviceUrl);
   }
 
-  // sendFile(data: FormData) { //: Observable<Blob>
+  // getFile(data: FormData) { //: Observable<Blob>
   //   return this.http.post<Blob>(this.serviceUrl + '/crop', data, {responseType: 'blob' as 'json'});
   // }
 
-  sendFile(data: FormData, cropped: boolean) { //: Observable<Blob>
-    // return this.http.post<Prediction[]>(this.serviceUrl + '/predict', data);
+  sendFile(data: FormData, cropped: boolean): Observable<ResponseWrapper> {
     const url = this.serviceUrl + (cropped ? '/predict-crop' : '/predict');
-    return this.http.post<any>(url, data);
+    return this.http.post<ResponseWrapper>(url, data);
   }
 
   getWiki(title: string) {
