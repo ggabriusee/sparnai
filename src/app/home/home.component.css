@@ -39,6 +39,11 @@
     overflow-x: hidden;
 }
 
+.my-tooltip {
+    color: #007bff;
+    cursor: pointer;
+}
+
 #loading {
     position: fixed;
     left: 50%;

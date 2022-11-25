@@ -27,8 +27,10 @@ export class ServerService {
   //   return this.http.post<Blob>(this.serviceUrl + '/crop', data, {responseType: 'blob' as 'json'});
   // }
 
-  sendFile(data: FormData, cropped: boolean): Observable<ResponseWrapper> {
-    const url = this.serviceUrl + (cropped ? '/predict-crop' : '/predict');
+  // autoFind - jeigu false, laikyti, kad paukstis cropped ir tsg speti jo rusi
+  // o ne ieskoti nuotraukoje
+  sendFile(data: FormData, autoFind: boolean): Observable<ResponseWrapper> {
+    const url = this.serviceUrl + (autoFind ? '/predict' : '/predict-crop');
     return this.http.post<ResponseWrapper>(url, data);
   }
 

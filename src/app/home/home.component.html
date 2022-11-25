@@ -1,30 +1,31 @@
 <ng-container *ngIf="serverWorks && !loading && !imageUrl">
-  <form #form="ngForm" (ngSubmit)="onSubmit()">
-    <div class="form-group">
-      <div class="dropzone" appDragDrop (fileDropped)="onFileUpload($event)">
-        <input 
-          title="Neįkeltas joks failas"
-          ngModel #inputFile="ngModel" name="inputFile" required
-          type="file"   
-          id="fileDropRef"
-          class="form-control-file"
-          (change)="onFileUpload($event)">
-        <img class="mb-2" src="../../assets/ic-upload-file.svg" alt="">
+  <div class="form-group">
+    <div class="dropzone" appDragDrop (fileDropped)="onFileUpload($event)">
+      <input 
+        title="Neįkeltas joks failas"
+        ngModel #inputFile="ngModel" name="inputFile" required
+        type="file"   
+        id="fileDropRef"
+        class="form-control-file"
+        (change)="onFileUpload($event)">
+      <div>
         <h3>Įtempkite failą čia</h3>
         <h3>arba</h3>
-        <label class="btn btn-danger mb-0 px-5" for="fileDropRef">Įkelkite failą</label>
+        <img class="mb-2" src="assets/ic-upload-file.svg" alt="">
       </div>
-      <div class="alert alert-danger" *ngIf="inputFile.touched && error">
-        <div *ngIf="error">
-          {{errorText}}
-        </div>
+      <label class="btn btn-danger mb-0 px-5" for="fileDropRef">Įkelkite failą</label>
+    </div>
+    <div class="alert alert-danger" *ngIf="inputFile.touched && error">
+      <div *ngIf="error">
+        {{errorText}}
       </div>
     </div>
-  </form>
+  </div>
 </ng-container>
 
 <div *ngIf="imageUrl" [ngStyle]="{'max-height': containerHeight}" class="scroll-container" [hidden]="loading">
   <div class="card" style="width: 19rem;">
+    <!-- Nuotraukos -->
     <image-cropper
       *ngIf="enabledCrop"
       class="card-img-top"
@@ -36,6 +37,8 @@
     </image-cropper>
     <img *ngIf="!enabledCrop" #uploadedImage class="card-img-top" src="{{imageUrl}}" alt="Card image">
     <!-- <img *ngIf="enabledCrop" class="card-img-top" src="{{croppedImage}}" alt="cropped card image"> -->
+    
+    <!-- Klaidos, loading'as -->
     <div *ngIf="loadingImage || error" class="card-body">
       <p *ngIf="loadingImage" class="card-text">Analizuojama...</p>
       <div *ngIf="loadingImage" class="d-flex justify-content-center">
@@ -45,9 +48,18 @@
       </div>
       <p *ngIf="error" class="mb-0">{{errorText}}</p>
     </div>
-    <div *ngIf="predictions.length > 0 && !loadingImage && !loading">
-      <h5 class="ml-2 mt-2">Spėjimai:</h5>
-      <ul class="list-group list-group-flush">
+
+    <!-- Rezultatai -->
+    <div *ngIf="predictions.length > 0 && !loadingImage && !loading && !error">
+      <div class="d-flex align-items-center">
+        <h5 class="ml-2 mt-2">Spėjimai:</h5>
+        <i 
+          class="ml-2 fa-regular fa-circle-question my-tooltip" 
+          placement="auto" triggers="click"
+          ngbTooltip="{{TOOL_TIP_RESULTS}}">
+        </i>
+      </div>
+      <ul class="list-group">
         <li *ngFor="let pred of predictions" class="list-group-item">
           {{pred.displayName}}
           <a *ngIf="pred.wiki_url" [href]="pred.wiki_url" target="_blank" class="card-link ml-1">wiki</a>
@@ -55,13 +67,33 @@
         </li>
       </ul>  
     </div>
-    <div *ngIf="!loadingImage && !loading" class="p-1 d-flex flex-column">
-      <div class="d-flex justify-content-between my-2">
-        <button class="btn btn-primary px-5" (click)="onSubmit()">Spėti</button>
-        <button class="btn btn-secondary px-5" (click)="enableCrop()">{{enabledCrop ? 'Nekirpti' : 'Iškirpti'}}</button>  
+
+    <!-- Forma -->
+    <form *ngIf="!loadingImage && !loading" #form="ngForm" (ngSubmit)="onSubmit(form)">
+      <div *ngIf="!enabledCrop" class="form-group form-check ml-2 mb-0 mt-1">
+        <input
+          [(ngModel)]="autoFind" name="autoFindCheck"
+          type="checkbox" 
+          class="form-check-input" 
+          id="autoFindCheckId">
+        <label class="form-check-label" for="autoFindCheckId">Automatiškai surasti paukštį</label>
+        <i 
+          class="ml-2 fa-regular fa-circle-question my-tooltip" 
+          [placement]="['left']" triggers="click"
+          ngbTooltip="{{TOOL_TIP_CHECKBOX}}">
+        </i>
       </div>
-      <button class="btn btn-danger px-5" (click)="clearState()">Valyti</button>
-    </div>
+      <!-- Mygtukai -->
+      <div class="p-1 d-flex flex-column">
+        <div class="d-flex justify-content-between my-2">
+          <button class="btn btn-primary px-5">Spėti</button>
+          <button type="button" class="btn btn-secondary px-5" (click)="enableCrop()">
+            {{enabledCrop ? 'Nekirpti' : 'Iškirpti'}}
+          </button>  
+        </div>
+        <button type="button" class="btn btn-danger px-5" (click)="clearState()">Valyti</button>
+      </div>
+    </form>
   </div>
 </div>
 

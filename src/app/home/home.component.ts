@@ -3,6 +3,7 @@ import { ServerService } from '../server.service';
 import { Prediction } from '../models/Prediction';
 import { CropperPosition, Dimensions, ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
 import { ResponseWrapper } from '../models/ResponseWrapper';
+import { NgForm } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
@@ -11,7 +12,16 @@ import { ResponseWrapper } from '../models/ResponseWrapper';
 })
 export class HomeComponent implements OnInit {
 
-  readonly NO_BIRDS = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką.';
+  //rezultatai yra tikslesni, tačiau retesni
+  readonly NO_BIRDS = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką arba iškirpkite paukštį.';
+  readonly TOOL_TIP_CHECKBOX = `Skirta automatiškai surasti paukštį jeigu nuotraukoje yra pašalinių objektų.
+    Su šia opcija analizė ilgiau užtrunka, rezultatai yra tikslesni, tačiau paukštį ne visada suranda.
+    Jeigu nuotraukoje paukštis dominuoja geriau išjungti šią opciją.
+    Pasirinkus "iškirpti" ši opcija bus automatiškai išjungta.`;
+  readonly TOOL_TIP_RESULTS = `Top 5 spėjimai. Rezultatai išrikiuoti tikėtinumo tvarka.
+    Šalia pateikiamos nuorodos į paukščio vikipedijos puslapį. 
+    Lietuviškų paukščių rezultatai pateikiami lietuviškais pavadinimais ir turi nuorodą į ornitologijos puslapį.
+    Užsienio paukščiai pateikiami lotyniškais pavadinimais.`;
 
   // @ViewChild(ImageCropperComponent) imageCropper: ImageCropperComponent;
   // @ViewChild('uploadedImage') uploadedImage: ElementRef;
@@ -23,15 +33,16 @@ export class HomeComponent implements OnInit {
   errorText = this.NO_BIRDS;
   error: boolean;
   imageUrl: string;
-  birdNames = new Map<string, string | null>();
+  //birdNames = new Map<string, string | null>();
   serverWorks: boolean;
   enabledCrop: boolean;
   croppedImage: string;
   containerHeight: string = '';
+  autoFind = true;
   // cropperPos: CropperPosition;
 
   constructor(private server: ServerService){
-    this.birdNames.set('background', 'Nežinoma');
+    //this.birdNames.set('background', 'Nežinoma');
   }
 
   ngOnInit(): void {
@@ -45,7 +56,7 @@ export class HomeComponent implements OnInit {
   }
 
   enableCrop(){
-    this.error = false;
+    this.clearErrorState();
     this.enabledCrop = !this.enabledCrop;
     if (this.enabledCrop) {
       this.loading = true;
@@ -66,35 +77,41 @@ export class HomeComponent implements OnInit {
 
   imageCropped(event: ImageCroppedEvent) {
     this.croppedImage = event.base64;
-    // this.error = false;
+    // this.clearErrorState();
   }
 
-  onSubmit(){
-    if (this.error && !this.imageUrl) {
+  onSubmit(form: NgForm){
+    if ((this.error && !this.imageUrl) || form.invalid) {
+      alert('Atsiprašome, įvyko klaida.');
       return;
     }
     
+    const autoFind = form.value.autoFindCheck === true;
     const formData = new FormData();
     const file = this.enabledCrop && this.croppedImage 
       ? this.dataURItoBlob(this.croppedImage) 
       : this.selectedFiles.item(0);
     formData.append('file', file, file.name);
     this.loadingImage = true;
-    this.error = false;
-    this.server.sendFile(formData, this.enabledCrop).subscribe((response: ResponseWrapper) => {
+    this.clearErrorState();
+    this.server.sendFile(formData, autoFind).subscribe((response: ResponseWrapper) => {
       if (response.error) {
         this.error = true;
         this.loadingImage = false;
         return;
       }
+      console.log(response.predictions);
       this.predictions = response.predictions.map((pred, idx) => {
         pred.displayName = idx+1 + '. ' + (pred.lt === null ? pred.lot : pred.lt);
         return pred;
       });
-      this.error = this.predictions.length === 0;
+      if (this.predictions.length === 0 || this.predictions[0].lot === 'background') {
+        this.error = true;
+        this.errorText = 'Nežinoma. Paukštis nerastas.';
+      }
       this.loadingImage = false;
     });
-    // this.server.sendFile(formData, this.enabledCrop).subscribe(async preds => {
+    // this.server.sendFile(formData, autoFind).subscribe(async preds => {
     //   if (preds.error) {
     //     this.error = true;
     //     this.loadingImage = false;
@@ -133,14 +150,18 @@ export class HomeComponent implements OnInit {
   //   });
   // }
 
+  clearErrorState(): void {
+    this.errorText = this.NO_BIRDS;
+    this.error = false;
+  }
+
   clearState(): void {
     // this.cropperPos = null;
     this.enabledCrop = false;
     this.croppedImage = null;
     this.imageUrl = null;
-    this.errorText = this.NO_BIRDS;
-    this.error = false;
     this.predictions = [];
+    this.clearErrorState();
   }
 
   onFileUpload(event) {
@@ -155,11 +176,12 @@ export class HomeComponent implements OnInit {
         this.errorText = "Įkeltas ne paveikslėlio failas!";
         return;
     }
-
+    this.loading = true;
     const reader = new FileReader();
     reader.readAsDataURL(this.selectedFiles.item(0)); 
     reader.onload = (_event) => { 
         this.imageUrl = reader.result.toString();
+        this.loading = false;
     }
     // this.onSubmit();
   }
