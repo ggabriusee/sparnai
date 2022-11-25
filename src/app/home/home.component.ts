@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ServerService } from '../server.service';
 import { Prediction } from '../models/Prediction';
 import { CropperPosition, Dimensions, ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
@@ -10,7 +10,7 @@ import { NgForm } from '@angular/forms';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, AfterViewChecked {
 
   //rezultatai yra tikslesni, tačiau retesni
   readonly NO_BIRDS = 'Šioje nuotraukoje neaptikta paukščių. Įkelkite kitą nuotrauką arba iškirpkite paukštį.';
@@ -25,6 +25,7 @@ export class HomeComponent implements OnInit {
 
   // @ViewChild(ImageCropperComponent) imageCropper: ImageCropperComponent;
   // @ViewChild('uploadedImage') uploadedImage: ElementRef;
+  @ViewChild('scrollMe') myScrollContainer: ElementRef;
 
   predictions: Prediction[] = [];
   loading: boolean = false;
@@ -39,6 +40,7 @@ export class HomeComponent implements OnInit {
   croppedImage: string;
   containerHeight: string = '';
   autoFind = true;
+  submited: boolean;
   // cropperPos: CropperPosition;
 
   constructor(private server: ServerService){
@@ -54,6 +56,13 @@ export class HomeComponent implements OnInit {
     },
     err => this.loading = false);
   }
+
+  ngAfterViewChecked() {
+    if (this.submited) {
+      this.scrollToBottom();
+      this.submited = false;
+    }             
+} 
 
   enableCrop(){
     this.clearErrorState();
@@ -73,6 +82,7 @@ export class HomeComponent implements OnInit {
 
   imageLoaded() {
     this.loading = false;
+    this.scrollToTop();
   }
 
   imageCropped(event: ImageCroppedEvent) {
@@ -93,19 +103,21 @@ export class HomeComponent implements OnInit {
       : this.selectedFiles.item(0);
     formData.append('file', file, file.name);
     this.loadingImage = true;
+    this.submited = false;
     this.clearErrorState();
     this.server.sendFile(formData, autoFind).subscribe((response: ResponseWrapper) => {
+      this.submited = true;
       if (response.error) {
         this.error = true;
         this.loadingImage = false;
         return;
       }
-      console.log(response.predictions);
       this.predictions = response.predictions.map((pred, idx) => {
         pred.displayName = idx+1 + '. ' + (pred.lt === null ? pred.lot : pred.lt);
         return pred;
       });
       if (this.predictions.length === 0 || this.predictions[0].lot === 'background') {
+        this.predictions = [];
         this.error = true;
         this.errorText = 'Nežinoma. Paukštis nerastas.';
       }
@@ -150,6 +162,22 @@ export class HomeComponent implements OnInit {
   //   });
   // }
 
+  scrollToBottom(): void {
+    if (!this.myScrollContainer) {
+      return;
+    }
+    try {
+        this.myScrollContainer.nativeElement.scrollTop = this.myScrollContainer.nativeElement.scrollHeight;
+    } catch(err) { }                 
+  }
+
+  scrollToTop(): void {
+    if (!this.myScrollContainer) {
+      return;
+    }
+    setTimeout(() => this.myScrollContainer.nativeElement.scrollTop = 0);
+  }
+
   clearErrorState(): void {
     this.errorText = this.NO_BIRDS;
     this.error = false;
@@ -157,6 +185,7 @@ export class HomeComponent implements OnInit {
 
   clearState(): void {
     // this.cropperPos = null;
+    this.autoFind = true;
     this.enabledCrop = false;
     this.croppedImage = null;
     this.imageUrl = null;

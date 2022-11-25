@@ -23,7 +23,7 @@
   </div>
 </ng-container>
 
-<div *ngIf="imageUrl" [ngStyle]="{'max-height': containerHeight}" class="scroll-container" [hidden]="loading">
+<div *ngIf="imageUrl" #scrollMe [ngStyle]="{'max-height': containerHeight}" class="scroll-container" [hidden]="loading">
   <div class="card" style="width: 19rem;">
     <!-- Nuotraukos -->
     <image-cropper
